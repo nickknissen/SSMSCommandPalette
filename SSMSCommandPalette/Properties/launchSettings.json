@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "SSMSCommandPalette (Package)": {
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": true
+    },
+    "SSMSCommandPalette (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

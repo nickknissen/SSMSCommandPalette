@@ -1,0 +1,129 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>SSMSCommandPalette</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <WindowsSdkPackageVersion>10.0.26100.68-preview</WindowsSdkPackageVersion>
+    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+    <DefaultLanguage>en-US</DefaultLanguage>
+
+    <!-- Microsoft Store identity (per Partner Center reservation). -->
+    <AppxPackageIdentityName>NickNissen.SSMSforCommandPalette</AppxPackageIdentityName>
+    <AppxPackagePublisher>CN=8E44B6E4-A8D0-49BB-8093-C2544C9DB8A7</AppxPackagePublisher>
+    <AppxPackageVersion>1.0.0.0</AppxPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\**\*.png" />
+  </ItemGroup>
+
+  <Target Name="PrepareAssets" BeforeTargets="BeforeBuild">
+    <!-- Copy scale-200 assets to the unscaled filenames the Microsoft Store
+         validator expects. We don't ship dedicated scale-100 art, so the
+         scale-200 image is reused. -->
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\Square150x150Logo.scale-200.png"
+          DestinationFiles="$(MSBuildProjectDirectory)\Assets\Square150x150Logo.png"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\Square44x44Logo.scale-200.png"
+          DestinationFiles="$(MSBuildProjectDirectory)\Assets\Square44x44Logo.png"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\Square44x44Logo.scale-200.png"
+          DestinationFiles="$(MSBuildProjectDirectory)\Assets\SmallTile.png"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\Square150x150Logo.scale-200.png"
+          DestinationFiles="$(MSBuildProjectDirectory)\Assets\LargeTile.png"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\Wide310x150Logo.scale-200.png"
+          DestinationFiles="$(MSBuildProjectDirectory)\Assets\Wide310x150Logo.png"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\SplashScreen.scale-200.png"
+          DestinationFiles="$(MSBuildProjectDirectory)\Assets\SplashScreen.png"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\StoreLogo.scale-200.png"
+          DestinationFiles="$(MSBuildProjectDirectory)\Assets\StoreLogo.png"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
+    <!-- Exclude accidentally nested intermediate output from default compile globs -->
+    <Compile Remove="SSMSCommandPalette\obj\**\*.cs" />
+    <EmbeddedResource Remove="SSMSCommandPalette\obj\**\*" />
+    <None Remove="SSMSCommandPalette\obj\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>CommitHash</_Parameter1>
+      <_Parameter2>$(SourceRevisionId)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(ExtraDefineConstants)' != ''">
+    <DefineConstants>$(DefineConstants);$(ExtraDefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <!--
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CommandPalette.Extensions" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" />
+    <PackageReference Include="Shmuelie.WinRTServer" />
+
+    <!-- Needed to enable building an MSIX package -->
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IsAotCompatible>true</IsAotCompatible>
+
+    <CsWinRTAotOptimizerEnabled>true</CsWinRTAotOptimizerEnabled>
+    <CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
+    <!-- Suppress DynamicallyAccessedMemberTypes.PublicParameterlessConstructor in fallback code path of Windows SDK projection -->
+    <WarningsNotAsErrors>IL2081;$(WarningsNotAsErrors)</WarningsNotAsErrors>
+
+    <!-- When publishing trimmed, make sure to treat trimming warnings as build errors -->
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <PublishTrimmed>false</PublishTrimmed>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'!='Debug'">
+    <PublishTrimmed>true</PublishTrimmed>
+    <ILLinkTreatWarningsAsErrors>false</ILLinkTreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
