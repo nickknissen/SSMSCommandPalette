@@ -16,18 +16,12 @@ Management Studio connections so you can launch them directly from CmdPal.
 
 ## How it works
 
-This extension reads `UserSettings.xml` from the local SSMS settings
-directory:
-
-```text
-%APPDATA%\Microsoft\SQL Server Management Studio\<version>\UserSettings.xml
-```
-
-If multiple SSMS versions are installed it picks whichever
-`UserSettings.xml` was written most recently. Each `<ServerConnectionSettings>`
-block in the file becomes a Command Palette item; selecting one launches
-`Ssms.exe` with `-S <server>` (and `-d <database>` / `-U <user>` when those
-are set).
+The extension reads `UserSettings.xml` from
+`%APPDATA%\Microsoft\SQL Server Management Studio\<version>\`. If multiple
+SSMS versions are installed it picks whichever `UserSettings.xml` was
+written most recently. Each `<ServerConnectionSettings>` block becomes a
+Command Palette item; selecting one launches `Ssms.exe` with `-S <server>`
+(plus `-d <database>` and `-U <user>` when those are set).
 
 ## Requirements
 
@@ -38,46 +32,41 @@ are set).
 
 ## Installation
 
-### Build from source
-
-```powershell
-dotnet restore
-dotnet build SSMSCommandPalette.sln -c Release -p:Platform=x64
-```
-
-For a sideloadable signed MSIX, see [Development](#development) below.
+Not yet published to the Microsoft Store or WinGet — install by building
+from source. See [Development](#development) below.
 
 ## Usage
 
 After installation, open **PowerToys Command Palette** and look for the
 **SSMS** provider. Type to search across your servers / databases /
-usernames, then press <kbd>Enter</kbd> to open the selected connection
-in SSMS.
+usernames, then press <kbd>Enter</kbd> to open the selected connection in
+SSMS.
 
 ## Development
 
 ### Local build for testing
 
 ```powershell
-.\SSMSCommandPalette\build-msix.ps1 -Version 1.0.0 -Platforms x64
+.\SSMSCommandPalette\build-msix.ps1 -Version 1.0.0 -Platforms @('x64','arm64') -Bundle
 ```
 
-Produces `SSMSCommandPalette\bin\Release\msix\SSMSCommandPalette_1.0.0.0_x64.msix`.
+Produces `SSMSCommandPalette\bin\Release\msix\SSMSCommandPalette_1.0.0.0.msixbundle`.
 With no `-CertPath` / `-CertBase64`, the package is left unsigned.
 
-To build both architectures and bundle:
+For a single-architecture build during development:
 
 ```powershell
-.\SSMSCommandPalette\build-msix.ps1 -Version 1.0.0 -Platforms @('x64','arm64') -Bundle
+.\SSMSCommandPalette\build-msix.ps1 -Version 1.0.0 -Platforms x64
 ```
 
 ### Sign locally
 
 The shared CmdPal signing cert lives in 1Password under
-`Private/CmdPal Signing Cert` (same cert used by
-[TablePlusCommandPalette](https://github.com/nickknissen/TablePlusCommandPalette)
+`Private/CmdPal Signing Cert`. The same cert is used by
+[TablePlusCommandPalette](https://github.com/nickknissen/TablePlusCommandPalette),
+[TailscaleCommandPalette](https://github.com/nickknissen/TailscaleCommandPalette),
 and
-[TailscaleCommandPalette](https://github.com/nickknissen/TailscaleCommandPalette)).
+[SSMSCommandPalette](https://github.com/nickknissen/SSMSCommandPalette).
 
 ```powershell
 .\scripts\sign-local.ps1 -Path .\SSMSCommandPalette\bin\Release\msix\*.msix*
@@ -88,7 +77,7 @@ and
 ```powershell
 Add-AppxPackage .\SSMSCommandPalette\bin\Release\msix\SSMSCommandPalette_1.0.0.0_x64.msix
 
-# Remove every installed copy (sideloaded, Store, dev-registered):
+# Remove every installed copy (sideloaded, dev-registered):
 .\scripts\uninstall.ps1
 ```
 
@@ -103,6 +92,16 @@ server names aren't leaked).
 .\SSMSCommandPalette\build-msix.ps1 -Version 1.0.0 -Platforms x64 -Demo
 ```
 
+## Releasing
+
+No GitHub Actions release pipeline is set up yet for this repo. Once one
+is added it will mirror the workflows used by
+[TablePlusCommandPalette](https://github.com/nickknissen/TablePlusCommandPalette/blob/main/.github/workflows/release.yml)
+and
+[TailscaleCommandPalette](https://github.com/nickknissen/TailscaleCommandPalette/blob/main/.github/workflows/release.yml):
+build signed x64 + ARM64 MSIX, bundle into `.msixbundle`, attach to a
+GitHub Release, and dispatch a `wingetcreate` PR to `microsoft/winget-pkgs`.
+
 ## Project structure
 
 ```text
@@ -111,7 +110,8 @@ SSMSCommandPalette/
 ├─ Models/        # SSMS connection model and query result
 ├─ Pages/         # Command Palette list pages
 ├─ Services/      # UserSettings.xml parsing and Ssms.exe discovery
-└─ Assets/        # App and extension icons
+├─ Assets/        # App and extension icons
+└─ build-msix.ps1 # Signed MSIX build script
 ```
 
 ## Troubleshooting
@@ -133,8 +133,8 @@ Open SSMS at least once and connect to a server so it writes a
 
 The extension launches `Ssms.exe -S <server> [-d <database>] [-U <user>]`.
 For SQL Server Auth, SSMS prompts for the password — it isn't read from
-`UserSettings.xml`. If SSMS opens without prefilling the dialog, confirm
-the executable resolves correctly and try invoking it from a terminal:
+`UserSettings.xml`. If SSMS doesn't open, confirm the executable runs
+manually:
 
 ```powershell
 & "C:\Program Files (x86)\Microsoft SQL Server Management Studio 20\Common7\IDE\Ssms.exe" -S "your-server"
