@@ -24,25 +24,34 @@ public sealed class SsmsConnectionService
 
     private readonly string _settingsRoot;
 
+#pragma warning disable CS0649, CS0169 // Unused under DEMO_MODE.
     private readonly object _cacheLock = new();
     private SsmsQueryResult? _cachedResult;
     private string _cachedSettingsPath = string.Empty;
     private DateTime _settingsLastWrite = DateTime.MinValue;
+#pragma warning restore CS0649, CS0169
 
     public SsmsConnectionService()
     {
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         _settingsRoot = Path.Combine(appData, "Microsoft", "SQL Server Management Studio");
 
+#if !DEMO_MODE
         // Warm up the cache so the first GetItems() doesn't block on disk I/O.
         Task.Run(() =>
         {
             try { _ = GetItems(); } catch { }
         });
+#endif
     }
 
+#pragma warning disable CA1822 // GetItems is static under DEMO_MODE — keep instance signature for the live path.
     public SsmsQueryResult GetItems()
+#pragma warning restore CA1822
     {
+#if DEMO_MODE
+        return DemoSsmsData.Result();
+#else
         var exePath = FindSsmsExe();
         if (string.IsNullOrEmpty(exePath))
         {
@@ -87,6 +96,7 @@ public sealed class SsmsConnectionService
             _settingsLastWrite = timestamp;
             return _cachedResult;
         }
+#endif
     }
 
     private static SsmsQueryResult LoadFromDisk(string settingsPath, string exePath)

@@ -61,7 +61,13 @@ param(
 
     [string]$SourceRevisionId = $env:GITHUB_SHA,
 
-    [switch]$Bundle
+    [switch]$Bundle,
+
+    # Build with DEMO_MODE define so the extension surfaces hard-coded
+    # demo connections instead of reading the local SSMS settings file.
+    # Used to take Microsoft Store screenshots without leaking real
+    # server names.
+    [switch]$Demo
 )
 
 $ErrorActionPreference = "Stop"
@@ -132,6 +138,9 @@ try {
         )
         if (-not [string]::IsNullOrWhiteSpace($SourceRevisionId)) {
             $publishArgs += "-p:SourceRevisionId=$SourceRevisionId"
+        }
+        if ($Demo) {
+            $publishArgs += '-p:ExtraDefineConstants=DEMO_MODE'
         }
         & dotnet @publishArgs
         if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed for $Platform" }
