@@ -33,7 +33,7 @@ Command Palette item; selecting one launches `Ssms.exe` with `-S <server>`
 ## Installation
 
 Not yet published to the Microsoft Store or WinGet — install by building
-from source. See [Development](#development) below.
+from source. See [docs/development.md](docs/development.md).
 
 ## Usage
 
@@ -44,63 +44,14 @@ SSMS.
 
 ## Development
 
-### Local build for testing
-
-```powershell
-.\SSMSCommandPalette\build-msix.ps1 -Version 1.0.0 -Platforms @('x64','arm64') -Bundle
-```
-
-Produces `SSMSCommandPalette\bin\Release\msix\SSMSCommandPalette_1.0.0.0.msixbundle`.
-With no `-CertPath` / `-CertBase64`, the package is left unsigned.
-
-For a single-architecture build during development:
-
-```powershell
-.\SSMSCommandPalette\build-msix.ps1 -Version 1.0.0 -Platforms x64
-```
-
-### Sign locally
-
-The shared CmdPal signing cert lives in 1Password under
-`Private/CmdPal Signing Cert`. The same cert is used by
-[TablePlusCommandPalette](https://github.com/nickknissen/TablePlusCommandPalette),
-[TailscaleCommandPalette](https://github.com/nickknissen/TailscaleCommandPalette),
-and
-[SSMSCommandPalette](https://github.com/nickknissen/SSMSCommandPalette).
-
-```powershell
-.\scripts\sign-local.ps1 -Path .\SSMSCommandPalette\bin\Release\msix\*.msix*
-```
-
-### Install / uninstall
-
-```powershell
-Add-AppxPackage .\SSMSCommandPalette\bin\Release\msix\SSMSCommandPalette_1.0.0.0_x64.msix
-
-# Remove every installed copy (sideloaded, dev-registered):
-.\scripts\uninstall.ps1
-```
-
-### Demo mode
-
-Pass `-Demo` to `build-msix.ps1` to compile with the `DEMO_MODE` define so
-the extension surfaces hard-coded demo connections instead of reading the
-local SSMS settings file (used for Microsoft Store screenshots so real
-server names aren't leaked).
-
-```powershell
-.\SSMSCommandPalette\build-msix.ps1 -Version 1.0.0 -Platforms x64 -Demo
-```
+See [docs/development.md](docs/development.md) for local build, signing,
+install/uninstall, and demo-mode instructions.
 
 ## Releasing
 
-No GitHub Actions release pipeline is set up yet for this repo. Once one
-is added it will mirror the workflows used by
-[TablePlusCommandPalette](https://github.com/nickknissen/TablePlusCommandPalette/blob/main/.github/workflows/release.yml)
-and
-[TailscaleCommandPalette](https://github.com/nickknissen/TailscaleCommandPalette/blob/main/.github/workflows/release.yml):
-build signed x64 + ARM64 MSIX, bundle into `.msixbundle`, attach to a
-GitHub Release, and dispatch a `wingetcreate` PR to `microsoft/winget-pkgs`.
+See [docs/releasing.md](docs/releasing.md). No GitHub Actions release
+pipeline is set up yet for this repo — once added it will mirror the
+sibling workflows.
 
 ## Project structure
 
