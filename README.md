@@ -49,9 +49,8 @@ install/uninstall, and demo-mode instructions.
 
 ## Releasing
 
-See [docs/releasing.md](docs/releasing.md). No GitHub Actions release
-pipeline is set up yet for this repo — once added it will mirror the
-sibling workflows.
+See [docs/releasing.md](docs/releasing.md) for the GitHub Actions release
+workflow and required signing secrets.
 
 ## Project structure
 
